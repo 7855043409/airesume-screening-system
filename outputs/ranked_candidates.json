@@ -1,0 +1,271 @@
+[
+  {
+    "score": 89.93,
+    "skill_match": 100.0,
+    "semantic_similarity": 77.05,
+    "experience_score": 90.0,
+    "education_score": 66.67,
+    "years_experience": 1.8,
+    "matched_skills": [
+      "Python",
+      "NLP",
+      "Semantic Similarity",
+      "LLM",
+      "Prompt Engineering",
+      "Machine Learning",
+      "APIs",
+      "Git/GitHub",
+      "SQL/Data",
+      "RAG/Document Processing",
+      "FastAPI/Streamlit",
+      "AI Agents"
+    ],
+    "missing_skills": [],
+    "candidate": "candidate_01",
+    "reasoning": "Strong fit for the role. The candidate matched these relevant skills: Python, NLP, Semantic Similarity, LLM, Prompt Engineering, Machine Learning, APIs, Git/GitHub, SQL/Data, RAG/Document Processing, FastAPI/Streamlit, AI Agents. Missing or unmatched skills: None. The candidate has approximately 1.8 years of experience. Overall screening score: 89.93/100.",
+    "rank": 1
+  },
+  {
+    "score": 70.54,
+    "skill_match": 75.0,
+    "semantic_similarity": 66.48,
+    "experience_score": 60.0,
+    "education_score": 66.67,
+    "years_experience": 1.2,
+    "matched_skills": [
+      "Python",
+      "NLP",
+      "LLM",
+      "Prompt Engineering",
+      "Machine Learning",
+      "APIs",
+      "Git/GitHub",
+      "SQL/Data",
+      "FastAPI/Streamlit"
+    ],
+    "missing_skills": [
+      "Semantic Similarity",
+      "RAG/Document Processing",
+      "AI Agents"
+    ],
+    "candidate": "candidate_02",
+    "reasoning": "Moderate fit for the role. The candidate matched these relevant skills: Python, NLP, LLM, Prompt Engineering, Machine Learning, APIs, Git/GitHub, SQL/Data, FastAPI/Streamlit. Missing or unmatched skills: Semantic Similarity, RAG/Document Processing, AI Agents. The candidate has approximately 1.2 years of experience. Overall screening score: 70.54/100.",
+    "rank": 2
+  },
+  {
+    "score": 57.34,
+    "skill_match": 50.0,
+    "semantic_similarity": 52.68,
+    "experience_score": 100.0,
+    "education_score": 66.67,
+    "years_experience": 2.5,
+    "matched_skills": [
+      "Python",
+      "NLP",
+      "Machine Learning",
+      "APIs",
+      "Git/GitHub",
+      "SQL/Data"
+    ],
+    "missing_skills": [
+      "Semantic Similarity",
+      "LLM",
+      "Prompt Engineering",
+      "RAG/Document Processing",
+      "FastAPI/Streamlit",
+      "AI Agents"
+    ],
+    "candidate": "candidate_03",
+    "reasoning": "Moderate fit for the role. The candidate matched these relevant skills: Python, NLP, Machine Learning, APIs, Git/GitHub, SQL/Data. Missing or unmatched skills: Semantic Similarity, LLM, Prompt Engineering, RAG/Document Processing, FastAPI/Streamlit, AI Agents. The candidate has approximately 2.5 years of experience. Overall screening score: 57.34/100.",
+    "rank": 3
+  },
+  {
+    "score": 56.13,
+    "skill_match": 58.33,
+    "semantic_similarity": 53.5,
+    "experience_score": 40.0,
+    "education_score": 66.67,
+    "years_experience": 0.8,
+    "matched_skills": [
+      "Python",
+      "NLP",
+      "Semantic Similarity",
+      "LLM",
+      "Prompt Engineering",
+      "Git/GitHub",
+      "RAG/Document Processing"
+    ],
+    "missing_skills": [
+      "Machine Learning",
+      "APIs",
+      "SQL/Data",
+      "FastAPI/Streamlit",
+      "AI Agents"
+    ],
+    "candidate": "candidate_04",
+    "reasoning": "Moderate fit for the role. The candidate matched these relevant skills: Python, NLP, Semantic Similarity, LLM, Prompt Engineering, Git/GitHub, RAG/Document Processing. Missing or unmatched skills: Machine Learning, APIs, SQL/Data, FastAPI/Streamlit, AI Agents. The candidate has approximately 0.8 years of experience. Overall screening score: 56.13/100.",
+    "rank": 4
+  },
+  {
+    "score": 55.91,
+    "skill_match": 58.33,
+    "semantic_similarity": 55.33,
+    "experience_score": 100.0,
+    "education_score": 0.0,
+    "years_experience": 3.0,
+    "matched_skills": [
+      "Python",
+      "NLP",
+      "LLM",
+      "APIs",
+      "Git/GitHub",
+      "SQL/Data",
+      "FastAPI/Streamlit"
+    ],
+    "missing_skills": [
+      "Semantic Similarity",
+      "Prompt Engineering",
+      "Machine Learning",
+      "RAG/Document Processing",
+      "AI Agents"
+    ],
+    "candidate": "candidate_07",
+    "reasoning": "Moderate fit for the role. The candidate matched these relevant skills: Python, NLP, LLM, APIs, Git/GitHub, SQL/Data, FastAPI/Streamlit. Missing or unmatched skills: Semantic Similarity, Prompt Engineering, Machine Learning, RAG/Document Processing, AI Agents. The candidate has approximately 3.0 years of experience. Overall screening score: 55.91/100.",
+    "rank": 5
+  },
+  {
+    "score": 54.17,
+    "skill_match": 50.0,
+    "semantic_similarity": 60.02,
+    "experience_score": 50.0,
+    "education_score": 66.67,
+    "years_experience": 1.0,
+    "matched_skills": [
+      "Python",
+      "LLM",
+      "Prompt Engineering",
+      "APIs",
+      "Git/GitHub",
+      "FastAPI/Streamlit"
+    ],
+    "missing_skills": [
+      "NLP",
+      "Semantic Similarity",
+      "Machine Learning",
+      "SQL/Data",
+      "RAG/Document Processing",
+      "AI Agents"
+    ],
+    "candidate": "candidate_06",
+    "reasoning": "Lower fit for the role. The candidate matched these relevant skills: Python, LLM, Prompt Engineering, APIs, Git/GitHub, FastAPI/Streamlit. Missing or unmatched skills: NLP, Semantic Similarity, Machine Learning, SQL/Data, RAG/Document Processing, AI Agents. The candidate has approximately 1.0 years of experience. Overall screening score: 54.17/100.",
+    "rank": 6
+  },
+  {
+    "score": 47.06,
+    "skill_match": 41.67,
+    "semantic_similarity": 53.23,
+    "experience_score": 75.0,
+    "education_score": 33.33,
+    "years_experience": 1.5,
+    "matched_skills": [
+      "Python",
+      "Machine Learning",
+      "APIs",
+      "Git/GitHub",
+      "SQL/Data"
+    ],
+    "missing_skills": [
+      "NLP",
+      "Semantic Similarity",
+      "LLM",
+      "Prompt Engineering",
+      "RAG/Document Processing",
+      "FastAPI/Streamlit",
+      "AI Agents"
+    ],
+    "candidate": "candidate_05",
+    "reasoning": "Lower fit for the role. The candidate matched these relevant skills: Python, Machine Learning, APIs, Git/GitHub, SQL/Data. Missing or unmatched skills: NLP, Semantic Similarity, LLM, Prompt Engineering, RAG/Document Processing, FastAPI/Streamlit, AI Agents. The candidate has approximately 1.5 years of experience. Overall screening score: 47.06/100.",
+    "rank": 7
+  },
+  {
+    "score": 44.24,
+    "skill_match": 41.67,
+    "semantic_similarity": 51.97,
+    "experience_score": 50.0,
+    "education_score": 33.33,
+    "years_experience": 1.0,
+    "matched_skills": [
+      "Python",
+      "NLP",
+      "LLM",
+      "Git/GitHub",
+      "SQL/Data"
+    ],
+    "missing_skills": [
+      "Semantic Similarity",
+      "Prompt Engineering",
+      "Machine Learning",
+      "APIs",
+      "RAG/Document Processing",
+      "FastAPI/Streamlit",
+      "AI Agents"
+    ],
+    "candidate": "candidate_09",
+    "reasoning": "Lower fit for the role. The candidate matched these relevant skills: Python, NLP, LLM, Git/GitHub, SQL/Data. Missing or unmatched skills: Semantic Similarity, Prompt Engineering, Machine Learning, APIs, RAG/Document Processing, FastAPI/Streamlit, AI Agents. The candidate has approximately 1.0 years of experience. Overall screening score: 44.24/100.",
+    "rank": 8
+  },
+  {
+    "score": 42.59,
+    "skill_match": 33.33,
+    "semantic_similarity": 62.35,
+    "experience_score": 20.0,
+    "education_score": 66.67,
+    "years_experience": 0.4,
+    "matched_skills": [
+      "Python",
+      "NLP",
+      "Machine Learning",
+      "Git/GitHub"
+    ],
+    "missing_skills": [
+      "Semantic Similarity",
+      "LLM",
+      "Prompt Engineering",
+      "APIs",
+      "SQL/Data",
+      "RAG/Document Processing",
+      "FastAPI/Streamlit",
+      "AI Agents"
+    ],
+    "candidate": "candidate_08",
+    "reasoning": "Lower fit for the role. The candidate matched these relevant skills: Python, NLP, Machine Learning, Git/GitHub. Missing or unmatched skills: Semantic Similarity, LLM, Prompt Engineering, APIs, SQL/Data, RAG/Document Processing, FastAPI/Streamlit, AI Agents. The candidate has approximately 0.4 years of experience. Overall screening score: 42.59/100.",
+    "rank": 9
+  },
+  {
+    "score": 31.61,
+    "skill_match": 33.33,
+    "semantic_similarity": 43.11,
+    "experience_score": 25.0,
+    "education_score": 0.0,
+    "years_experience": 0.5,
+    "matched_skills": [
+      "NLP",
+      "LLM",
+      "APIs",
+      "SQL/Data"
+    ],
+    "missing_skills": [
+      "Python",
+      "Semantic Similarity",
+      "Prompt Engineering",
+      "Machine Learning",
+      "Git/GitHub",
+      "RAG/Document Processing",
+      "FastAPI/Streamlit",
+      "AI Agents"
+    ],
+    "candidate": "candidate_10",
+    "reasoning": "Lower fit for the role. The candidate matched these relevant skills: NLP, LLM, APIs, SQL/Data. Missing or unmatched skills: Python, Semantic Similarity, Prompt Engineering, Machine Learning, Git/GitHub, RAG/Document Processing, FastAPI/Streamlit, AI Agents. The candidate has approximately 0.5 years of experience. Overall screening score: 31.61/100.",
+    "rank": 10
+  }
+]

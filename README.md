@@ -403,4 +403,4 @@ to deterministic reasoning so that candidate screening and ranking
 continue without interruption.
 ## Author
 
-Developed as an AI-powered resume screening and candidate ranking project.
+Developed as an AI-powered resume screening and candidate ranking project. 
