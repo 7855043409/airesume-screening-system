@@ -1,6 +1,8 @@
 # AI Resume Screening Agent
 
-An AI-powered resume screening and ranking system that evaluates multiple candidate resumes against a given job description and produces a ranked candidate list with skill matching, semantic similarity, experience analysis, education scoring, and candidate reasoning.
+An AI-powered resume screening and candidate ranking system that evaluates multiple candidate resumes against a given job description.
+
+The system combines rule-based scoring, NLP-based semantic similarity, skill matching, experience analysis, education relevance, and optional LLM-based reasoning to generate a ranked list of candidates.
 
 ---
 
@@ -13,36 +15,129 @@ An AI-powered resume screening and ranking system that evaluates multiple candid
 - Calculate semantic similarity between the job description and resumes
 - Estimate candidate experience
 - Evaluate education relevance
-- Generate an overall candidate score
+- Calculate an overall candidate score
 - Rank candidates from highest to lowest score
+- Generate candidate reasoning
 - Generate CSV and JSON reports
-- Use OpenAI for candidate reasoning when API quota is available
-- Provide deterministic fallback reasoning when the LLM is unavailable
+- Optional OpenAI-powered reasoning
+- Deterministic fallback reasoning when the LLM is unavailable
+- Secure API key handling using environment variables
+
+---
+
+## How It Works
+
+The application follows a resume screening pipeline:
+
+```text
+Job Description
+       |
+       v
+Resume Collection
+       |
+       v
+Text Extraction
+       |
+       v
+Skill Extraction & Matching
+       |
+       +----------------------+
+       |                      |
+       v                      v
+Skill Match           Semantic Similarity
+       |                      |
+       +----------+-----------+
+                  |
+                  v
+        Experience Analysis
+                  |
+                  v
+        Education Evaluation
+                  |
+                  v
+        Overall Candidate Score
+                  |
+                  v
+          Candidate Ranking
+                  |
+          +-------+-------+
+          |               |
+          v               v
+        CSV             JSON
+       Report           Report
+```
+
+---
+
+## Scoring Methodology
+
+Each candidate is evaluated using multiple factors.
+
+### Skill Match
+
+Measures how closely the candidate's skills match the skills required by the job description.
+
+### Semantic Similarity
+
+Uses an NLP embedding model to compare the overall meaning and context of the resume with the job description.
+
+### Experience Score
+
+Estimates the candidate's relevant professional experience based on the available resume information.
+
+### Education Score
+
+Evaluates the relevance of the candidate's educational background to the role.
+
+### Overall Score
+
+The individual evaluation factors are combined to calculate an overall candidate score out of 100.
+
+Candidates are then ranked from the highest score to the lowest score.
+
+---
+
+## LLM-Based Reasoning
+
+The application can optionally use the OpenAI API to generate natural-language reasoning for each candidate.
+
+Example:
+
+```text
+The candidate demonstrates strong alignment with the required
+technical skills and has relevant experience in Python and NLP.
+The candidate is therefore a strong match for the role.
+```
+
+If the OpenAI API is unavailable because of quota, billing, network, or other API-related issues, the application uses deterministic fallback reasoning.
+
+This allows candidate scoring, ranking, and report generation to continue even when the LLM is unavailable.
 
 ---
 
 ## Project Structure
 
 ```text
-resume-screening-agent/
-│
-├── app.py
-├── requirements.txt
-├── .env
-├── .gitignore
-├── README.md
-│
-├── data/
-│   ├── job_description.txt
-│   └── resumes/
-│       ├── candidate_01.txt
-│       ├── candidate_02.txt
-│       ├── candidate_03.txt
-│       └── ...
-│
-└── outputs/
-    ├── ranked_candidates.csv
-    └── ranked_candidates.json
+airesume-screening-system/
+|
++-- app.py
++-- requirements.txt
++-- README.md
++-- .gitignore
+|
++-- data/
+|   +-- job_description.txt
+|   |
+|   +-- resumes/
+|       +-- candidate_01.txt
+|       +-- candidate_02.txt
+|       +-- candidate_03.txt
+|       +-- candidate_04.txt
+|       +-- ...
+|
++-- outputs/
+    +-- ranked_candidates.csv
+    +-- ranked_candidates.json
 ```
 
 ---
@@ -51,148 +146,42 @@ resume-screening-agent/
 
 - Python
 - Pandas
+- NumPy
 - Sentence Transformers
+- NLP
+- Semantic Similarity
+- OpenAI API
 - PyMuPDF
 - python-docx
-- OpenAI API
 - python-dotenv
-- Semantic Embeddings
-- Rule-based Skill Matching
-
----
-
-## How It Works
-
-The system follows the pipeline below:
-
-```text
-Job Description
-       │
-       ▼
-Resume Collection
-       │
-       ▼
-Text Extraction
-       │
-       ▼
-Skill Extraction
-       │
-       ▼
-Skill Matching
-       │
-       ▼
-Semantic Similarity
-       │
-       ▼
-Experience Analysis
-       │
-       ▼
-Education Analysis
-       │
-       ▼
-Weighted Score
-       │
-       ▼
-Candidate Ranking
-       │
-       ▼
-LLM Reasoning / Fallback Reasoning
-       │
-       ▼
-CSV + JSON Reports
-```
-
----
-
-## Scoring Methodology
-
-The final candidate score is calculated using a weighted scoring approach.
-
-| Component | Weight |
-|---|---:|
-| Skill Match | 55% |
-| Semantic Similarity | 25% |
-| Experience | 10% |
-| Education | 10% |
-
-### Final Score
-
-```text
-Final Score =
-    Skill Match × 0.55
-  + Semantic Similarity × 0.25
-  + Experience × 0.10
-  + Education × 0.10
-```
-
-The final score is calculated on a scale of 0–100.
-
----
-
-## Skill Matching
-
-The system checks the job description and resumes for relevant skills such as:
-
-- Python
-- NLP
-- Machine Learning
-- LLM
-- Generative AI
-- Prompt Engineering
-- Semantic Similarity
-- APIs
-- Git/GitHub
-- SQL
-- RAG
-- FastAPI
-- Streamlit
-- AI Agents
-
-The system reports both:
-
-- Matched skills
-- Missing or unmatched skills
-
----
-
-## Semantic Similarity
-
-The system uses the Sentence Transformers model:
-
-```text
-all-MiniLM-L6-v2
-```
-
-The job description and each resume are converted into embeddings.
-
-The similarity between the embeddings is used to estimate how closely each resume matches the job description.
-
----
-
-## Candidate Reasoning
-
-When a valid OpenAI API quota is available, the system uses an LLM to generate concise candidate reasoning based on the job description, resume, and computed screening result.
-
-If the OpenAI API is unavailable, the system automatically uses deterministic fallback reasoning based on:
-
-- Overall score
-- Matched skills
-- Missing skills
-- Experience
-
-This allows the screening pipeline to continue even when the LLM service is unavailable.
+- JSON
+- CSV
 
 ---
 
 ## Installation
 
-### 1. Create a virtual environment
+### 1. Clone the Repository
+
+```bash
+git clone https://github.com/7855043409/airesume-screening-system.git
+```
+
+### 2. Navigate to the Project
+
+```bash
+cd airesume-screening-system
+```
+
+### 3. Create a Virtual Environment
+
+Windows:
 
 ```bash
 python -m venv .venv
 ```
 
-### 2. Activate the virtual environment
+### 4. Activate the Virtual Environment
 
 Windows:
 
@@ -200,7 +189,7 @@ Windows:
 .venv\Scripts\activate
 ```
 
-### 3. Install dependencies
+### 5. Install Dependencies
 
 ```bash
 pip install -r requirements.txt
@@ -208,27 +197,37 @@ pip install -r requirements.txt
 
 ---
 
-## Environment Variables
+## Environment Setup
 
-Create a `.env` file in the project root:
+Create a `.env` file in the project root directory.
 
-```text
-OPENAI_API_KEY=your_api_key_here
+```env
+OPENAI_API_KEY=your_openai_api_key_here
 ```
 
-Never commit your actual API key to GitHub.
+Do not upload your real API key to GitHub.
 
-The `.gitignore` file excludes `.env`.
+The `.env` file is excluded from version control using `.gitignore`.
+
+For sharing the project, you can create a `.env.example` file:
+
+```env
+OPENAI_API_KEY=your_openai_api_key_here
+```
 
 ---
 
 ## Input Data
 
-Place the job description here:
+### Job Description
+
+Place the job description inside:
 
 ```text
 data/job_description.txt
 ```
+
+### Resumes
 
 Place candidate resumes inside:
 
@@ -236,40 +235,100 @@ Place candidate resumes inside:
 data/resumes/
 ```
 
-Supported formats:
+The application supports:
+
+- `.txt`
+- `.pdf`
+- `.docx`
+
+Example:
 
 ```text
-.txt
-.pdf
-.docx
+data/resumes/
+├── candidate_01.txt
+├── candidate_02.txt
+├── candidate_03.pdf
+└── candidate_04.docx
 ```
 
 ---
 
 ## Running the Application
 
-Run the following command:
+Run the following command from the project root:
 
 ```bash
 python app.py --jd data/job_description.txt --resumes data/resumes --output outputs
 ```
 
-Example output:
+The application will:
+
+1. Load the job description
+2. Load candidate resumes
+3. Extract resume text
+4. Extract relevant skills
+5. Compare candidate skills with job requirements
+6. Calculate semantic similarity
+7. Estimate experience
+8. Evaluate education relevance
+9. Calculate an overall score
+10. Generate candidate reasoning
+11. Rank candidates
+12. Save the results
+
+---
+
+## Output
+
+After successful execution, the application generates:
 
 ```text
-Found 10 resumes.
+outputs/
+├── ranked_candidates.csv
+└── ranked_candidates.json
+```
 
-Processing: candidate_01.txt
-Processing: candidate_02.txt
-Processing: candidate_03.txt
-Processing: candidate_04.txt
-Processing: candidate_05.txt
-Processing: candidate_06.txt
-Processing: candidate_07.txt
-Processing: candidate_08.txt
-Processing: candidate_09.txt
-Processing: candidate_10.txt
+### CSV Report
 
+The CSV report contains structured candidate evaluation information such as:
+
+```text
+rank
+candidate
+score
+skill_match
+semantic_similarity
+experience_score
+education_score
+years_experience
+matched_skills
+missing_skills
+reasoning
+```
+
+### JSON Report
+
+The JSON report contains structured candidate evaluation data including:
+
+- Candidate name
+- Overall score
+- Skill match
+- Semantic similarity
+- Experience score
+- Education score
+- Years of experience
+- Matched skills
+- Missing skills
+- Candidate reasoning
+- Rank
+
+---
+
+## Example Result
+
+Example candidate ranking:
+
+```text
 ============================================================
 RESUME SCREENING RESULTS
 ============================================================
@@ -284,123 +343,118 @@ RESUME SCREENING RESULTS
  8. candidate_09          44.24/100
  9. candidate_08          42.59/100
 10. candidate_10          31.61/100
-
-Results saved:
-outputs\ranked_candidates.csv
-outputs\ranked_candidates.json
 ```
 
----
-
-## Output Files
-
-The application generates two reports.
-
-### ranked_candidates.csv
-
-Contains structured candidate ranking information including:
-
-- Rank
-- Candidate
-- Overall score
-- Skill match
-- Semantic similarity
-- Experience score
-- Education score
-- Years of experience
-- Matched skills
-- Missing skills
-- Reasoning
-
-### ranked_candidates.json
-
-Contains the same screening information in structured JSON format.
+The exact scores depend on the job description and resumes provided as input.
 
 ---
 
-## Example Result
+## Fallback Behaviour
+
+The application is designed to continue processing even when the OpenAI API is unavailable.
+
+### When LLM is available
 
 ```text
-Rank: 1
-Candidate: candidate_01
-Score: 89.93/100
-
-Matched Skills:
-Python, NLP, Machine Learning, LLM-Detected from the candidate resume
-
-Missing Skills:
-None-Detected against the job description
-
-Experience:
-Extracted from resume
+Resume
+  |
+  v
+Candidate Scoring
+  |
+  v
+OpenAI Reasoning
+  |
+  v
+Final Candidate Report
 ```
-Reasoning:
-Generated using LLM or deterministic fallback reasoning
----
 
-## Error Handling
+### When LLM is unavailable
 
-The application is designed to continue processing candidates even when an individual LLM request fails.
+```text
+Resume
+  |
+  v
+Candidate Scoring
+  |
+  v
+Deterministic Fallback Reasoning
+  |
+  v
+Final Candidate Report
+```
 
-For example, if the OpenAI API returns an insufficient quota error, the system automatically switches to deterministic fallback reasoning instead of terminating the complete screening process.
+This ensures that candidate ranking and report generation can continue without depending completely on external LLM availability.
 
 ---
 
 ## Security
 
-Sensitive configuration should be stored in `.env`.
+Sensitive information such as API keys must be stored using environment variables.
 
-Never commit:
+The following files and directories are excluded from Git:
 
 ```text
 .env
+.venv/
+venv/
+env/
+__pycache__/
+.cache/
 ```
 
-or any API keys to GitHub.
+Never commit:
 
-The `.gitignore` file is configured to prevent accidental exposure of environment variables and other unnecessary files.
+- API keys
+- Passwords
+- Access tokens
+- Private credentials
+- Other sensitive information
 
 ---
 
 ## Limitations
 
-- Skill extraction is based on predefined skill aliases.
-- Experience extraction depends on resume text patterns.
-- Semantic similarity does not replace human recruitment judgment.
-- LLM reasoning depends on API availability and quota.
-- The system is intended as a screening assistant rather than a final hiring decision-maker.
+- Resume quality affects the accuracy of extracted information.
+- Experience and education scoring are based on the implemented screening logic.
+- Semantic similarity measures contextual similarity but does not replace human evaluation.
+- LLM reasoning depends on API availability and account quota.
+- The system should be used as a recruitment assistance tool rather than an autonomous hiring decision-maker.
+- Candidate ranking should be reviewed by a human recruiter before making final hiring decisions.
 
 ---
 
 ## Future Improvements
 
-Possible future enhancements include:
+Possible future improvements include:
 
 - Web-based recruiter dashboard
-- Resume ranking visualization
+- Resume upload interface
 - Advanced skill taxonomy
-- Better experience and date extraction
+- Improved experience extraction
+- Candidate comparison dashboard
+- Interactive scoring visualization
 - Database integration
-- Recruiter feedback loop
-- Configurable scoring weights
-- Explainable candidate comparison
-- Batch processing through a web interface
-- Authentication and user management
+- Batch processing optimization
+- Additional resume formats
+- Advanced LLM-based candidate analysis
+- Human-in-the-loop recruiter feedback
+- Automated interview recommendation
+- Explainable AI scoring
 
 ---
 
+## Project Goal
 
+The goal of this project is to demonstrate how NLP, semantic similarity, rule-based scoring, and optional LLM reasoning can be combined to build an automated resume screening and candidate ranking system.
 
-```markdown
-## Key Design Decision
+The project focuses on making resume screening faster, more structured, and easier to analyze while keeping human decision-making in the final hiring process.
 
-The system uses a hybrid approach. Deterministic scoring is used for
-skill matching, semantic similarity, experience, and education, while
-LLM-based reasoning is used for qualitative candidate explanation.
+---
 
-If the LLM service is unavailable, the system automatically falls back
-to deterministic reasoning so that candidate screening and ranking
-continue without interruption.
 ## Author
 
-Developed as an AI-powered resume screening and candidate ranking project. 
+**Durga Raula**
+
+GitHub Repository:
+
+https://github.com/7855043409/airesume-screening-system
