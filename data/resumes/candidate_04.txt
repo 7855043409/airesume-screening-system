@@ -1,0 +1,20 @@
+Sneha Patra
+
+Education:
+M.Tech Computer Science
+
+Experience:
+0.8 years of research and project experience.
+
+Skills:
+Python, NLP, LLM, Prompt Engineering, RAG,
+Semantic Similarity, GitHub.
+
+Projects:
+Conducted an academic research project on Retrieval
+Augmented Generation and semantic similarity for
+document question answering. Developed NLP pipelines
+using Python and experimented with LLM-based applications.
+
+Additional:
+Strong research, analytical and documentation skills.

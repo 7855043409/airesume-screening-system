@@ -1,0 +1,19 @@
+Ananya Rao
+
+Education:
+B.Tech Information Technology
+
+Experience:
+1 year of project and internship experience.
+
+Skills:
+Python, LLM, Generative AI, Prompt Engineering,
+Streamlit, GitHub.
+
+Projects:
+Built a Generative AI chatbot using Python and LLM APIs.
+Created prompt templates for different user tasks and
+developed a Streamlit interface for the application.
+
+Additional:
+Good communication and analytical skills.

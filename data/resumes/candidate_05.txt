@@ -1,0 +1,19 @@
+Vikram Singh
+
+Education:
+B.Tech Electronics and Communication Engineering
+
+Experience:
+1.5 years of software development experience.
+
+Skills:
+Python, APIs, Git, GitHub, SQL, Machine Learning,
+Data Analysis.
+
+Projects:
+Developed Python automation scripts and REST API
+integrations. Worked with SQL databases and basic
+machine learning models for data analysis.
+
+Additional:
+Good problem-solving and teamwork skills.

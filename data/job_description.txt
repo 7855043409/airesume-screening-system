@@ -1,0 +1,19 @@
+Junior AI Research Associate
+
+We are looking for an entry-level AI/NLP candidate with:
+
+- Python programming
+- NLP and semantic similarity
+- Large Language Models / Generative AI
+- Prompt engineering
+- Machine learning fundamentals
+- Experience with APIs
+- Git/GitHub
+- Basic SQL or data handling
+- Good analytical and communication skills
+
+Preferred:
+
+- RAG or document processing
+- FastAPI or Streamlit
+- Experience building AI agents

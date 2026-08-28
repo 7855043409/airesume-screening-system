@@ -1,0 +1,19 @@
+Rahul Behera
+
+Education:
+B.Tech Mechanical Engineering
+
+Experience:
+1 year of experience in data automation.
+
+Skills:
+Python, SQL, Git, Data Analysis.
+
+Projects:
+Developed Python scripts for data automation and
+worked with SQL databases for reporting. Used Git
+for source code management.
+
+Additional:
+Good analytical and problem-solving skills.
+No significant professional NLP or Generative AI experience.

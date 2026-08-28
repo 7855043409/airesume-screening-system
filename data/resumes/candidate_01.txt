@@ -1,0 +1,22 @@
+Aarav Sharma
+
+Education:
+B.Tech Computer Science
+
+Experience:
+1.8 years of experience as a Junior AI Developer.
+
+Skills:
+Python, NLP, Machine Learning, LLM, Generative AI,
+Prompt Engineering, REST APIs, Git, GitHub, SQL,
+RAG, FastAPI, Semantic Similarity, AI Agents.
+
+Projects:
+Built an AI document assistant using Python, embeddings,
+RAG and FastAPI. Developed NLP pipelines for text
+processing and semantic similarity. Created REST APIs
+for an AI-based document processing application.
+
+Additional:
+Strong analytical problem solving, teamwork, documentation
+and communication skills.

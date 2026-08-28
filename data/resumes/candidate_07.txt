@@ -1,0 +1,20 @@
+Kunal Mehta
+
+Education:
+BCA
+
+Experience:
+3 years of backend development experience.
+
+Skills:
+Python, REST APIs, SQL, Git, GitHub, FastAPI,
+Backend Development.
+
+Projects:
+Developed backend services using Python and FastAPI.
+Designed REST APIs and worked extensively with SQL
+databases. Maintained applications using Git.
+
+Additional:
+Strong backend development and problem-solving skills.
+Limited direct NLP and Generative AI experience.

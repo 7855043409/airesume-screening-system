@@ -1,0 +1,20 @@
+Rohan Das
+
+Education:
+B.Tech Computer Science
+
+Experience:
+2.5 years of experience as a Python Developer.
+
+Skills:
+Python, Machine Learning, APIs, Git, GitHub, SQL,
+NLP, Pandas, Data Analysis.
+
+Projects:
+Developed Python automation applications and REST APIs.
+Worked on machine learning classification projects and
+data processing pipelines. Maintained software projects
+using Git and GitHub.
+
+Additional:
+Strong programming and analytical skills.

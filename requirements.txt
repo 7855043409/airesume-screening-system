@@ -1,0 +1,6 @@
+pandas
+python-dotenv
+sentence-transformers
+PyMuPDF
+python-docx
+openai

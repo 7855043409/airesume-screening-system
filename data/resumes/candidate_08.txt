@@ -1,0 +1,18 @@
+Meera Joshi
+
+Education:
+B.Tech Computer Science
+
+Experience:
+0.4 years of internship experience.
+
+Skills:
+Python, NLP, Machine Learning, GitHub.
+
+Projects:
+Completed academic projects involving NLP text
+classification, text preprocessing and machine learning.
+Used Python for implementing and evaluating models.
+
+Additional:
+Strong academic foundation in NLP and machine learning.
