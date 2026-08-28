@@ -1,610 +1,711 @@
-from pathlib import Path
-import argparse
-import json
 import os
 import re
+import json
+import argparse
+from pathlib import Path
 
 import pandas as pd
 from dotenv import load_dotenv
-from sentence_transformers import SentenceTransformer
+from sentence_transformers import SentenceTransformer, util
 
-import fitz
+try:
+    import pymupdf
+except ImportError:
+    # Compatibility fallback for older PyMuPDF installations
+    import fitz as pymupdf
+
 from docx import Document
 
+try:
+    from openai import OpenAI
+except ImportError:
+    OpenAI = None
+
 
 # ============================================================
-# LOAD ENVIRONMENT VARIABLES
+# CONFIGURATION
 # ============================================================
+
+MODEL_NAME = "all-MiniLM-L6-v2"
+
+# Final score weights
+SEMANTIC_WEIGHT = 40
+SKILL_WEIGHT = 35
+EXPERIENCE_WEIGHT = 15
+EDUCATION_WEIGHT = 10
 
 load_dotenv()
 
+OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
+OPENAI_MODEL = os.getenv("OPENAI_MODEL", "gpt-4o-mini")
+
+llm_client = None
+llm_disabled = False
+
 
 # ============================================================
-# SKILL DEFINITIONS
+# COMMON SKILLS
 # ============================================================
 
-SKILL_ALIASES = {
-    "Python": [
-        "python"
-    ],
+SKILL_LIST = {
+    # Programming
+    "python",
+    "java",
+    "javascript",
+    "typescript",
+    "c",
+    "c++",
+    "c#",
+    "go",
+    "golang",
+    "rust",
+    "php",
+    "ruby",
+    "kotlin",
+    "swift",
 
-    "NLP": [
-        "nlp",
-        "natural language processing"
-    ],
+    # Web
+    "html",
+    "css",
+    "react",
+    "react.js",
+    "angular",
+    "vue",
+    "node.js",
+    "nodejs",
+    "express",
+    "next.js",
+    "nextjs",
 
-    "Semantic Similarity": [
-        "semantic similarity",
-        "sentence transformer",
-        "embeddings",
-        "embedding"
-    ],
+    # Backend / APIs
+    "rest api",
+    "restful api",
+    "api",
+    "fastapi",
+    "flask",
+    "django",
+    "spring",
+    "spring boot",
 
-    "LLM": [
-        "llm",
-        "large language model",
-        "generative ai",
-        "genai"
-    ],
+    # Databases
+    "sql",
+    "mysql",
+    "postgresql",
+    "postgres",
+    "mongodb",
+    "sqlite",
+    "oracle",
+    "redis",
 
-    "Prompt Engineering": [
-        "prompt engineering",
-        "prompt design"
-    ],
+    # AI / ML
+    "machine learning",
+    "deep learning",
+    "artificial intelligence",
+    "ai",
+    "nlp",
+    "natural language processing",
+    "computer vision",
+    "generative ai",
+    "genai",
+    "llm",
+    "large language model",
+    "transformers",
+    "hugging face",
+    "huggingface",
+    "tensorflow",
+    "pytorch",
+    "scikit-learn",
+    "sklearn",
+    "keras",
+    "opencv",
+    "pandas",
+    "numpy",
 
-    "Machine Learning": [
-        "machine learning",
-        "ml"
-    ],
+    # Data
+    "data analysis",
+    "data analytics",
+    "data science",
+    "statistics",
+    "excel",
+    "power bi",
+    "tableau",
 
-    "APIs": [
-        "api",
-        "apis",
-        "rest api",
-        "restful api"
-    ],
+    # Cloud / DevOps
+    "aws",
+    "azure",
+    "gcp",
+    "google cloud",
+    "docker",
+    "kubernetes",
+    "git",
+    "github",
+    "gitlab",
+    "jenkins",
+    "ci/cd",
+    "linux",
 
-    "Git/GitHub": [
-        "git",
-        "github"
-    ],
+    # Testing
+    "selenium",
+    "pytest",
+    "junit",
+    "unit testing",
+    "automation testing",
+    "manual testing",
+    "software testing",
+    "test automation",
 
-    "SQL/Data": [
-        "sql",
-        "data analysis",
-        "pandas",
-        "data handling"
-    ],
-
-    "RAG/Document Processing": [
-        "rag",
-        "retrieval augmented generation",
-        "document processing",
-        "pdf"
-    ],
-
-    "FastAPI/Streamlit": [
-        "fastapi",
-        "streamlit"
-    ],
-
-    "AI Agents": [
-        "ai agent",
-        "ai agents",
-        "agentic",
-        "agent"
-    ],
+    # Other
+    "agile",
+    "scrum",
+    "jira",
+    "salesforce",
+    "sap",
 }
 
 
 # ============================================================
-# SCORING WEIGHTS
+# FILE EXTRACTION
 # ============================================================
 
-WEIGHTS = {
-    "skills": 0.55,
-    "semantic_similarity": 0.25,
-    "experience": 0.10,
-    "education": 0.10,
-}
+def read_txt(file_path):
+    """Read a TXT file."""
+    return Path(file_path).read_text(
+        encoding="utf-8",
+        errors="ignore"
+    )
 
 
-# ============================================================
-# READ FILE
-# ============================================================
+def read_pdf(file_path):
+    """Extract text from a PDF."""
+    text_parts = []
 
-def read_file(file_path):
+    document = pymupdf.open(file_path)
 
-    extension = file_path.suffix.lower()
-
-    # ---------------- TXT ----------------
-
-    if extension == ".txt":
-
-        return file_path.read_text(
-            encoding="utf-8",
-            errors="ignore"
-        )
-
-    # ---------------- PDF ----------------
-
-    elif extension == ".pdf":
-
-        document = fitz.open(file_path)
-
-        text = ""
-
+    try:
         for page in document:
-
-            text += page.get_text()
-
+            text_parts.append(page.get_text())
+    finally:
         document.close()
 
-        return text
+    return "\n".join(text_parts)
 
-    # ---------------- DOCX ----------------
 
-    elif extension == ".docx":
+def read_docx(file_path):
+    """Extract text from DOCX."""
+    document = Document(file_path)
 
-        document = Document(file_path)
+    paragraphs = [
+        paragraph.text
+        for paragraph in document.paragraphs
+        if paragraph.text.strip()
+    ]
 
-        text = "\n".join(
-            paragraph.text
-            for paragraph in document.paragraphs
-        )
+    return "\n".join(paragraphs)
 
-        return text
 
-    else:
+def extract_text(file_path):
+    """Extract text based on file extension."""
+    suffix = Path(file_path).suffix.lower()
 
-        raise ValueError(
-            f"Unsupported file type: {extension}"
-        )
+    if suffix == ".txt":
+        return read_txt(file_path)
+
+    if suffix == ".pdf":
+        return read_pdf(file_path)
+
+    if suffix == ".docx":
+        return read_docx(file_path)
+
+    raise ValueError(
+        f"Unsupported file format: {suffix}"
+    )
 
 
 # ============================================================
-# NORMALIZE TEXT
+# TEXT NORMALIZATION
 # ============================================================
 
 def normalize_text(text):
-
+    """Normalize text for matching."""
     text = text.lower()
-
-    text = re.sub(
-        r"\s+",
-        " ",
-        text
-    )
-
+    text = text.replace("–", "-")
+    text = text.replace("—", "-")
+    text = re.sub(r"\s+", " ", text)
     return text.strip()
 
 
+def phrase_in_text(phrase, text):
+    """
+    Check whether a skill/phrase exists in text.
+    Handles punctuation such as python / Python.
+    """
+    phrase = normalize_text(phrase)
+    text = normalize_text(text)
+
+    escaped = re.escape(phrase)
+
+    # Word boundaries for normal phrases
+    pattern = rf"(?<!\w){escaped}(?!\w)"
+
+    return re.search(pattern, text) is not None
+
+
 # ============================================================
-# EXTRACT SKILLS
+# SKILL EXTRACTION
 # ============================================================
 
 def extract_skills(text):
+    """
+    Extract known technical skills from text.
+    """
+    normalized = normalize_text(text)
 
-    text = normalize_text(text)
+    found = set()
 
-    detected_skills = {}
+    for skill in SKILL_LIST:
+        skill_normalized = normalize_text(skill)
 
-    for skill, aliases in SKILL_ALIASES.items():
+        pattern = rf"(?<!\w){re.escape(skill_normalized)}(?!\w)"
 
-        found = False
+        if re.search(pattern, normalized):
+            found.add(skill)
 
-        for alias in aliases:
+    return sorted(found)
 
-            pattern = (
-                r"(?<!\w)"
-                + re.escape(alias.lower())
-                + r"(?!\w)"
-            )
 
-            if re.search(
-                pattern,
-                text
-            ):
+def calculate_skill_score(jd_skills, resume_skills):
+    """
+    Calculate skill match percentage.
+    """
+    if not jd_skills:
+        return 0.0
 
-                found = True
+    jd_set = set(jd_skills)
+    resume_set = set(resume_skills)
 
-                break
+    matched = jd_set.intersection(resume_set)
 
-        detected_skills[skill] = found
-
-    return detected_skills
+    return round(
+        (len(matched) / len(jd_set)) * 100,
+        2
+    )
 
 
 # ============================================================
-# EXTRACT EXPERIENCE
+# EXPERIENCE EXTRACTION
 # ============================================================
 
-def extract_years_of_experience(text):
-
-    text = normalize_text(text)
+def estimate_experience(text):
+    """
+    Estimate years of experience from resume text.
+    """
+    normalized = normalize_text(text)
 
     patterns = [
-
-        r"(\d+(?:\.\d+)?)\+?\s*(?:years?|yrs?)\s*(?:of)?\s*(?:experience|exp)?",
-
-        r"experience\s*(?:of|:)?\s*(\d+(?:\.\d+)?)\s*(?:years?|yrs?)"
-
+        r"(\d+(?:\.\d+)?)\+?\s*(?:years?|yrs?)\s+(?:of\s+)?experience",
+        r"experience\s*[:\-]?\s*(\d+(?:\.\d+)?)\+?\s*(?:years?|yrs?)",
+        r"(\d+(?:\.\d+)?)\+?\s*(?:years?|yrs?)\s+in",
     ]
 
     values = []
 
     for pattern in patterns:
+        matches = re.findall(pattern, normalized)
 
-        matches = re.findall(
-            pattern,
-            text
-        )
-
-        for value in matches:
-
+        for match in matches:
             try:
-
-                values.append(
-                    float(value)
-                )
-
+                values.append(float(match))
             except ValueError:
-
                 pass
 
     if values:
+        return round(max(values), 1)
 
+    # Fresher / entry-level indicators
+    if any(
+        phrase in normalized
+        for phrase in [
+            "fresher",
+            "recent graduate",
+            "recently graduated",
+            "entry level",
+            "entry-level",
+        ]
+    ):
+        return 0.0
+
+    return 0.0
+
+
+def extract_required_experience(jd_text):
+    """
+    Extract required experience from the JD.
+    """
+    normalized = normalize_text(jd_text)
+
+    patterns = [
+        r"(\d+(?:\.\d+)?)\+?\s*(?:years?|yrs?)\s+(?:of\s+)?experience",
+        r"minimum\s+(?:of\s+)?(\d+(?:\.\d+)?)\+?\s*(?:years?|yrs?)",
+        r"at\s+least\s+(\d+(?:\.\d+)?)\+?\s*(?:years?|yrs?)",
+    ]
+
+    values = []
+
+    for pattern in patterns:
+        matches = re.findall(pattern, normalized)
+
+        for match in matches:
+            try:
+                values.append(float(match))
+            except ValueError:
+                pass
+
+    if values:
         return max(values)
 
     return 0.0
 
 
+def calculate_experience_score(candidate_years, required_years):
+    """
+    Calculate experience score out of 100.
+    """
+    if required_years <= 0:
+        if candidate_years > 0:
+            return 100.0
+        return 70.0
+
+    if candidate_years >= required_years:
+        return 100.0
+
+    score = (candidate_years / required_years) * 100
+
+    return round(max(0.0, min(100.0, score)), 2)
+
+
 # ============================================================
-# EDUCATION SCORE
+# EDUCATION
 # ============================================================
 
-def education_score(text):
+def extract_education(text):
+    """
+    Detect common education qualifications.
+    """
+    normalized = normalize_text(text)
 
-    text = normalize_text(text)
-
-    education_terms = [
-
-        "b.tech",
-        "btech",
-        "b.e",
-        "bachelor",
+    education_keywords = [
+        "phd",
+        "doctorate",
+        "master",
         "m.tech",
         "mtech",
-        "master",
+        "m.e.",
+        "mba",
+        "msc",
+        "m.sc",
+        "bachelor",
+        "b.tech",
+        "btech",
+        "b.e.",
+        "be ",
+        "bsc",
+        "b.sc",
+        "bca",
+        "mca",
+        "diploma",
         "computer science",
-        "information technology"
-
+        "information technology",
+        "software engineering",
+        "data science",
+        "artificial intelligence",
     ]
 
-    matches = sum(
-        term in text
-        for term in education_terms
-    )
+    found = []
 
-    return min(
-        1.0,
-        matches / 3.0
-    )
+    for keyword in education_keywords:
+        if keyword in normalized:
+            found.append(keyword.strip())
+
+    return sorted(set(found))
+
+
+def calculate_education_score(jd_text, resume_text):
+    """
+    Estimate education relevance.
+    """
+    jd_education = extract_education(jd_text)
+    resume_education = extract_education(resume_text)
+
+    if not jd_education:
+        return 70.0
+
+    if not resume_education:
+        return 30.0
+
+    jd_text_normalized = normalize_text(jd_text)
+    resume_text_normalized = normalize_text(resume_text)
+
+    matches = 0
+
+    for keyword in jd_education:
+        if keyword in resume_text_normalized:
+            matches += 1
+
+    if matches == 0:
+        # Check broader technical relevance
+        technical_fields = [
+            "computer science",
+            "information technology",
+            "software engineering",
+            "artificial intelligence",
+            "data science",
+        ]
+
+        for field in technical_fields:
+            if (
+                field in jd_text_normalized
+                and field in resume_text_normalized
+            ):
+                matches += 1
+
+    if matches == 0:
+        return 40.0
+
+    score = (matches / len(jd_education)) * 100
+
+    return round(max(0.0, min(100.0, score)), 2)
 
 
 # ============================================================
 # SEMANTIC SIMILARITY
 # ============================================================
 
-def semantic_similarity(
+def calculate_semantic_similarity(
+    model,
     jd_text,
-    resume_text,
-    model
+    resume_text
 ):
-
-    embeddings = model.encode(
-        [
-            jd_text,
-            resume_text
-        ],
+    """
+    Calculate semantic similarity using Sentence Transformers.
+    """
+    jd_embedding = model.encode(
+        jd_text,
+        convert_to_tensor=True,
         normalize_embeddings=True
     )
 
-    similarity = (
-        embeddings[0]
-        @ embeddings[1]
-    )
-
-    return float(
-        similarity
-    )
-
-
-# ============================================================
-# CALCULATE SCORE
-# ============================================================
-
-def calculate_score(
-    jd_text,
-    resume_text,
-    model
-):
-
-    # Extract JD skills
-    jd_skills = extract_skills(
-        jd_text
-    )
-
-    # Extract resume skills
-    resume_skills = extract_skills(
-        resume_text
-    )
-
-    # Required skills
-    required_skills = [
-
-        skill
-
-        for skill, present
-        in jd_skills.items()
-
-        if present
-    ]
-
-    # Matched skills
-    matched_skills = [
-
-        skill
-
-        for skill in required_skills
-
-        if resume_skills.get(skill)
-    ]
-
-    # Missing skills
-    missing_skills = [
-
-        skill
-
-        for skill in required_skills
-
-        if not resume_skills.get(skill)
-    ]
-
-    # --------------------------------------------------------
-    # SKILL SCORE
-    # --------------------------------------------------------
-
-    skill_score = (
-
-        len(matched_skills)
-
-        /
-
-        max(
-            1,
-            len(required_skills)
-        )
-
-    )
-
-    # --------------------------------------------------------
-    # SEMANTIC SCORE
-    # --------------------------------------------------------
-
-    similarity = semantic_similarity(
-        jd_text,
+    resume_embedding = model.encode(
         resume_text,
-        model
+        convert_to_tensor=True,
+        normalize_embeddings=True
     )
 
-    similarity = max(
-        0.0,
-        min(
-            1.0,
-            similarity
-        )
-    )
+    similarity = util.cos_sim(
+        jd_embedding,
+        resume_embedding
+    ).item()
 
-    # --------------------------------------------------------
-    # EXPERIENCE SCORE
-    # --------------------------------------------------------
+    # Convert [-1,1] into [0,100]
+    score = ((similarity + 1) / 2) * 100
 
-    years = extract_years_of_experience(
-        resume_text
-    )
-
-    experience = min(
-        1.0,
-        years / 2.0
-    )
-
-    # --------------------------------------------------------
-    # EDUCATION SCORE
-    # --------------------------------------------------------
-
-    education = education_score(
-        resume_text
-    )
-
-    # --------------------------------------------------------
-    # FINAL SCORE
-    # --------------------------------------------------------
-
-    final_score = 100 * (
-
-        WEIGHTS["skills"]
-        * skill_score
-
-        +
-
-        WEIGHTS["semantic_similarity"]
-        * similarity
-
-        +
-
-        WEIGHTS["experience"]
-        * experience
-
-        +
-
-        WEIGHTS["education"]
-        * education
-
-    )
-
-    return {
-
-        "score": round(
-            final_score,
-            2
-        ),
-
-        "skill_match": round(
-            skill_score * 100,
-            2
-        ),
-
-        "semantic_similarity": round(
-            similarity * 100,
-            2
-        ),
-
-        "experience_score": round(
-            experience * 100,
-            2
-        ),
-
-        "education_score": round(
-            education * 100,
-            2
-        ),
-
-        "years_experience": years,
-
-        "matched_skills": matched_skills,
-
-        "missing_skills": missing_skills
-    }
-
-
-# ============================================================
-# FALLBACK REASONING
-# ============================================================
-
-def create_fallback_reasoning(result):
-
-    matched = (
-
-        ", ".join(
-            result["matched_skills"]
-        )
-
-        if result["matched_skills"]
-
-        else "None"
-    )
-
-    missing = (
-
-        ", ".join(
-            result["missing_skills"]
-        )
-
-        if result["missing_skills"]
-
-        else "None"
-    )
-
-    score = result["score"]
-
-    if score >= 75:
-
-        recommendation = (
-            "Strong fit for the role."
-        )
-
-    elif score >= 55:
-
-        recommendation = (
-            "Moderate fit for the role."
-        )
-
-    else:
-
-        recommendation = (
-            "Lower fit for the role."
-        )
-
-    return (
-
-        f"{recommendation} "
-
-        f"The candidate matched these relevant skills: "
-        f"{matched}. "
-
-        f"Missing or unmatched skills: "
-        f"{missing}. "
-
-        f"The candidate has approximately "
-        f"{result['years_experience']} years of experience. "
-
-        f"Overall screening score: "
-        f"{score}/100."
-
+    return round(
+        max(0.0, min(100.0, score)),
+        2
     )
 
 
 # ============================================================
-# LLM REASONING
+# OVERALL SCORE
 # ============================================================
 
-def generate_reasoning(
+def calculate_overall_score(
+    semantic_score,
+    skill_score,
+    experience_score,
+    education_score
+):
+    """
+    Calculate weighted final score.
+    """
+    score = (
+        semantic_score * SEMANTIC_WEIGHT / 100
+        + skill_score * SKILL_WEIGHT / 100
+        + experience_score * EXPERIENCE_WEIGHT / 100
+        + education_score * EDUCATION_WEIGHT / 100
+    )
+
+    return round(
+        max(0.0, min(100.0, score)),
+        2
+    )
+
+
+# ============================================================
+# DETERMINISTIC REASONING
+# ============================================================
+
+def generate_fallback_reasoning(
     jd_text,
     resume_text,
     result
 ):
+    """
+    Generate reasoning without an LLM.
 
-    api_key = os.getenv(
-        "OPENAI_API_KEY"
+    This guarantees that the application continues to work
+    even when the OpenAI API is unavailable.
+    """
+    matched = result["matched_skills"]
+    missing = result["missing_skills"]
+
+    semantic = result["semantic_similarity"]
+    skill = result["skill_match"]
+    experience = result["experience_score"]
+    education = result["education_score"]
+    overall = result["overall_score"]
+
+    candidate_years = result["estimated_experience"]
+    required_years = result["required_experience"]
+
+    strengths = []
+
+    if matched:
+        preview = ", ".join(matched[:8])
+        strengths.append(
+            f"matches relevant skills including {preview}"
+        )
+
+    if semantic >= 75:
+        strengths.append(
+            "has strong semantic alignment with the job description"
+        )
+    elif semantic >= 55:
+        strengths.append(
+            "shows moderate semantic alignment with the job description"
+        )
+
+    if required_years <= 0 and candidate_years > 0:
+        strengths.append(
+            f"shows approximately {candidate_years:g} years of experience"
+        )
+    elif required_years > 0 and candidate_years >= required_years:
+        strengths.append(
+            f"meets the estimated experience requirement of "
+            f"{required_years:g} years"
+        )
+
+    if education >= 70:
+        strengths.append(
+            "has relevant educational background"
+        )
+
+    if not strengths:
+        strengths.append(
+            "shows some relevant evidence against the job description"
+        )
+
+    gaps = []
+
+    if missing:
+        gaps.append(
+            "missing identified skills such as "
+            + ", ".join(missing[:8])
+        )
+
+    if required_years > candidate_years:
+        gaps.append(
+            f"estimated experience ({candidate_years:g} years) "
+            f"is below the requested {required_years:g} years"
+        )
+
+    if education < 50:
+        gaps.append(
+            "limited evidence of directly relevant education"
+        )
+
+    if not gaps:
+        gaps.append(
+            "no major gaps were detected using the available rules"
+        )
+
+    reasoning = (
+        f"Overall score: {overall}/100. "
+        f"The candidate {', '.join(strengths)}. "
+        f"Semantic similarity is {semantic}/100 and skill matching is "
+        f"{skill}/100. Experience score is {experience}/100 and "
+        f"education score is {education}/100. "
+        f"Main consideration: {'; '.join(gaps)}."
     )
 
-    # --------------------------------------------------------
-    # If API key does not exist
-    # --------------------------------------------------------
+    return reasoning
 
-    if not api_key:
 
-        return create_fallback_reasoning(
-            result
+# ============================================================
+# OPENAI REASONING
+# ============================================================
+
+def initialize_llm():
+    """
+    Initialize OpenAI client only when an API key is available.
+    """
+    global llm_client
+
+    if not OPENAI_API_KEY:
+        print(
+            "OpenAI API key not found. "
+            "Using deterministic reasoning."
         )
+        return
 
-    # --------------------------------------------------------
-    # Try OpenAI
-    # --------------------------------------------------------
+    if OpenAI is None:
+        print(
+            "OpenAI package unavailable. "
+            "Using deterministic reasoning."
+        )
+        return
 
     try:
-
-        from openai import OpenAI
-
-        client = OpenAI(
-            api_key=api_key
+        llm_client = OpenAI(
+            api_key=OPENAI_API_KEY
         )
 
-        prompt = f"""
-You are an HR recruitment analyst.
+        print(
+            f"OpenAI reasoning enabled "
+            f"({OPENAI_MODEL})."
+        )
 
-Evaluate the candidate ONLY using the
-provided Job Description and Resume.
+    except Exception as exc:
+        llm_client = None
 
-Explain in 2-4 concise sentences:
+        print(
+            f"OpenAI initialization failed: {exc}. "
+            "Using deterministic reasoning."
+        )
 
-1. Why the candidate received this score
-2. Main strengths
-3. Main skill gaps
-4. Overall suitability
 
-Do not invent information.
+def generate_llm_reasoning(
+    jd_text,
+    resume_text,
+    result
+):
+    """
+    Ask OpenAI for candidate reasoning.
+
+    If quota/API errors occur, LLM is disabled for the rest
+    of the run so we don't repeatedly generate 429 errors.
+    """
+    global llm_disabled
+
+    if llm_client is None or llm_disabled:
+        return None
+
+    matched = result["matched_skills"]
+    missing = result["missing_skills"]
+
+    prompt = f"""
+You are an AI resume screening assistant.
+
+Evaluate the candidate against the job description.
 
 JOB DESCRIPTION:
 {jd_text[:12000]}
@@ -612,394 +713,450 @@ JOB DESCRIPTION:
 RESUME:
 {resume_text[:12000]}
 
-COMPUTED SCREENING RESULT:
-{json.dumps(result, indent=2)}
+CALCULATED SCORES:
+Overall score: {result["overall_score"]}/100
+Semantic similarity: {result["semantic_similarity"]}/100
+Skill match: {result["skill_match"]}/100
+Experience score: {result["experience_score"]}/100
+Education score: {result["education_score"]}/100
+
+Matched skills:
+{", ".join(matched) if matched else "None"}
+
+Missing skills:
+{", ".join(missing) if missing else "None"}
+
+Estimated candidate experience:
+{result["estimated_experience"]} years
+
+Estimated required experience:
+{result["required_experience"]} years
+
+Write a concise professional hiring rationale.
+
+Mention:
+1. Strongest relevant skills
+2. Experience fit
+3. Education relevance
+4. Main skill gaps
+5. Overall suitability
+
+Do not invent information that is not present in the resume.
+Keep the answer under 120 words.
 """
 
-        response = client.chat.completions.create(
-
-            model=os.getenv(
-                "OPENAI_MODEL",
-                "gpt-4o-mini"
-            ),
-
-            temperature=0,
-
+    try:
+        response = llm_client.chat.completions.create(
+            model=OPENAI_MODEL,
             messages=[
-
                 {
                     "role": "system",
                     "content": (
-                        "You are a factual and "
-                        "evidence-based recruitment analyst."
-                    )
+                        "You are a precise resume screening "
+                        "assistant. Use only the supplied information."
+                    ),
                 },
-
                 {
                     "role": "user",
-                    "content": prompt
-                }
-
-            ]
+                    "content": prompt,
+                },
+            ],
+            temperature=0.2,
+            max_tokens=250,
         )
 
-        return (
-            response
-            .choices[0]
-            .message
-            .content
-            .strip()
-        )
+        content = response.choices[0].message.content
 
-    # --------------------------------------------------------
-    # If OpenAI fails
-    # --------------------------------------------------------
+        if content:
+            return content.strip()
 
-    except Exception as error:
+        return None
+
+    except Exception as exc:
+        # Disable LLM after first failure.
+        # This prevents 10 repeated 429 errors.
+        llm_disabled = True
 
         print(
-            f"\nLLM unavailable: "
-            f"{type(error).__name__}: {error}\n"
+            f"LLM unavailable: {type(exc).__name__}. "
+            "Switching to deterministic reasoning."
         )
 
-        return create_fallback_reasoning(
+        return None
+
+
+# ============================================================
+# CANDIDATE ANALYSIS
+# ============================================================
+
+def analyze_candidate(
+    jd_text,
+    resume_text,
+    model,
+    filename
+):
+    """
+    Complete candidate evaluation.
+    """
+
+    jd_skills = extract_skills(jd_text)
+    resume_skills = extract_skills(resume_text)
+
+    matched_skills = sorted(
+        set(jd_skills).intersection(resume_skills)
+    )
+
+    missing_skills = sorted(
+        set(jd_skills).difference(resume_skills)
+    )
+
+    skill_score = calculate_skill_score(
+        jd_skills,
+        resume_skills
+    )
+
+    semantic_score = calculate_semantic_similarity(
+        model,
+        jd_text,
+        resume_text
+    )
+
+    candidate_experience = estimate_experience(
+        resume_text
+    )
+
+    required_experience = extract_required_experience(
+        jd_text
+    )
+
+    experience_score = calculate_experience_score(
+        candidate_experience,
+        required_experience
+    )
+
+    education_score = calculate_education_score(
+        jd_text,
+        resume_text
+    )
+
+    overall_score = calculate_overall_score(
+        semantic_score,
+        skill_score,
+        experience_score,
+        education_score
+    )
+
+    result = {
+        "candidate": Path(filename).stem,
+        "filename": filename,
+        "overall_score": overall_score,
+        "semantic_similarity": semantic_score,
+        "skill_match": skill_score,
+        "experience_score": experience_score,
+        "education_score": education_score,
+        "estimated_experience": candidate_experience,
+        "required_experience": required_experience,
+        "matched_skills": matched_skills,
+        "missing_skills": missing_skills,
+        "resume_skills": resume_skills,
+        "jd_skills": jd_skills,
+        "reasoning": "",
+    }
+
+    # Try LLM first if available
+    reasoning = generate_llm_reasoning(
+        jd_text,
+        resume_text,
+        result
+    )
+
+    # Guaranteed fallback
+    if not reasoning:
+        reasoning = generate_fallback_reasoning(
+            jd_text,
+            resume_text,
             result
         )
 
+    result["reasoning"] = reasoning
+
+    return result
+
 
 # ============================================================
-# MAIN AGENT
+# LOAD RESUMES
+# ============================================================
+
+def get_resume_files(resume_directory):
+    """
+    Find supported resume files recursively.
+    """
+    directory = Path(resume_directory)
+
+    if not directory.exists():
+        raise FileNotFoundError(
+            f"Resume directory not found: {directory}"
+        )
+
+    extensions = {
+        ".txt",
+        ".pdf",
+        ".docx",
+    }
+
+    files = [
+        path
+        for path in directory.rglob("*")
+        if path.is_file()
+        and path.suffix.lower() in extensions
+    ]
+
+    return sorted(files)
+
+
+# ============================================================
+# SAVE RESULTS
+# ============================================================
+
+def save_results(results, output_directory):
+    """
+    Save ranked candidates to CSV and JSON.
+    """
+    output_path = Path(output_directory)
+    output_path.mkdir(
+        parents=True,
+        exist_ok=True
+    )
+
+    # Ranked order
+    results = sorted(
+        results,
+        key=lambda item: item["overall_score"],
+        reverse=True
+    )
+
+    # Add rank
+    for index, result in enumerate(results, start=1):
+        result["rank"] = index
+
+    # CSV-friendly version
+    csv_rows = []
+
+    for result in results:
+        row = {
+            "rank": result["rank"],
+            "candidate": result["candidate"],
+            "overall_score": result["overall_score"],
+            "semantic_similarity": result["semantic_similarity"],
+            "skill_match": result["skill_match"],
+            "experience_score": result["experience_score"],
+            "education_score": result["education_score"],
+            "estimated_experience": result["estimated_experience"],
+            "required_experience": result["required_experience"],
+            "matched_skills": ", ".join(
+                result["matched_skills"]
+            ),
+            "missing_skills": ", ".join(
+                result["missing_skills"]
+            ),
+            "reasoning": result["reasoning"],
+        }
+
+        csv_rows.append(row)
+
+    dataframe = pd.DataFrame(csv_rows)
+
+    csv_file = output_path / "ranked_candidates.csv"
+
+    dataframe.to_csv(
+        csv_file,
+        index=False,
+        encoding="utf-8"
+    )
+
+    json_file = output_path / "ranked_candidates.json"
+
+    with open(
+        json_file,
+        "w",
+        encoding="utf-8"
+    ) as file:
+        json.dump(
+            results,
+            file,
+            indent=2,
+            ensure_ascii=False
+        )
+
+    return csv_file, json_file
+
+
+# ============================================================
+# MAIN
 # ============================================================
 
 def main():
-
     parser = argparse.ArgumentParser(
-        description="AI Resume Screening Agent"
+        description=(
+            "AI Resume Screening Agent - "
+            "Ranks resumes against a job description."
+        )
     )
 
     parser.add_argument(
         "--jd",
         required=True,
-        help="Path to Job Description"
+        help="Path to Job Description file"
     )
 
     parser.add_argument(
         "--resumes",
         required=True,
-        help="Folder containing resumes"
+        help="Directory containing resumes"
     )
 
     parser.add_argument(
         "--output",
         default="outputs",
-        help="Output folder"
+        help="Output directory"
     )
 
     args = parser.parse_args()
 
-    jd_path = Path(
-        args.jd
-    )
-
-    resume_folder = Path(
-        args.resumes
-    )
-
-    output_folder = Path(
-        args.output
-    )
-
-    # Create output directory
-    output_folder.mkdir(
-        parents=True,
-        exist_ok=True
-    )
+    jd_path = Path(args.jd)
+    resume_directory = Path(args.resumes)
 
     # --------------------------------------------------------
-    # LOAD JOB DESCRIPTION
+    # Validate JD
     # --------------------------------------------------------
 
-    print(
-        "\nLoading Job Description..."
-    )
+    if not jd_path.exists():
+        raise FileNotFoundError(
+            f"Job description not found: {jd_path}"
+        )
 
-    jd_text = read_file(
-        jd_path
-    )
+    print("Loading Job Description...")
+
+    jd_text = extract_text(jd_path)
+
+    if not jd_text.strip():
+        raise ValueError(
+            "Job Description is empty."
+        )
 
     # --------------------------------------------------------
-    # LOAD MODEL
+    # Load semantic model
     # --------------------------------------------------------
 
-    print(
-        "Loading semantic similarity model..."
-    )
+    print("Loading semantic similarity model...")
 
     model = SentenceTransformer(
-        "all-MiniLM-L6-v2"
+        MODEL_NAME
     )
 
     # --------------------------------------------------------
-    # FIND RESUMES
+    # Initialize LLM
     # --------------------------------------------------------
 
-    supported_extensions = {
+    initialize_llm()
 
-        ".txt",
-        ".pdf",
-        ".docx"
+    # --------------------------------------------------------
+    # Find resumes
+    # --------------------------------------------------------
 
-    }
-
-    resume_files = [
-
-        file
-
-        for file in resume_folder.iterdir()
-
-        if file.is_file()
-        and file.suffix.lower()
-        in supported_extensions
-
-    ]
+    resume_files = get_resume_files(
+        resume_directory
+    )
 
     print(
         f"\nFound {len(resume_files)} resumes."
     )
 
     if not resume_files:
-
-        print(
-            "No supported resume files found."
+        raise ValueError(
+            "No TXT, PDF, or DOCX resumes found."
         )
 
-        return
-
     # --------------------------------------------------------
-    # PROCESS RESUMES
+    # Process candidates
     # --------------------------------------------------------
 
-    records = []
+    results = []
 
     for resume_file in resume_files:
 
         print(
-            f"Processing: "
-            f"{resume_file.name}"
+            f"Processing: {resume_file.name}"
         )
 
         try:
-
-            resume_text = read_file(
+            resume_text = extract_text(
                 resume_file
             )
 
-            result = calculate_score(
-                jd_text,
-                resume_text,
-                model
+            if not resume_text.strip():
+                print(
+                    "Warning: Resume is empty. Skipping."
+                )
+                continue
+
+            result = analyze_candidate(
+                jd_text=jd_text,
+                resume_text=resume_text,
+                model=model,
+                filename=resume_file.name
             )
 
-            reasoning = generate_reasoning(
-                jd_text,
-                resume_text,
-                result
-            )
+            results.append(result)
 
-            result["candidate"] = (
-                resume_file.stem
-            )
-
-            result["reasoning"] = (
-                reasoning
-            )
-
-            records.append(
-                result
-            )
-
-        except Exception as error:
-
+        except Exception as exc:
             print(
                 f"Error processing "
-                f"{resume_file.name}: "
-                f"{error}"
+                f"{resume_file.name}: {exc}"
             )
 
     # --------------------------------------------------------
-    # RANK CANDIDATES
+    # Sort
     # --------------------------------------------------------
 
-    records.sort(
-        key=lambda item:
-        item["score"],
+    results.sort(
+        key=lambda item: item["overall_score"],
         reverse=True
     )
 
-    # Add rank
-    for index, record in enumerate(
-        records,
+    # --------------------------------------------------------
+    # Display
+    # --------------------------------------------------------
+
+    print("\n")
+    print("=" * 60)
+    print("RESUME SCREENING RESULTS")
+    print("=" * 60)
+
+    for index, result in enumerate(
+        results,
         start=1
     ):
-
-        record["rank"] = index
-
-    # --------------------------------------------------------
-    # SAVE JSON
-    # --------------------------------------------------------
-
-    json_path = (
-
-        output_folder
-        /
-        "ranked_candidates.json"
-
-    )
-
-    json_path.write_text(
-
-        json.dumps(
-            records,
-            indent=2
-        ),
-
-        encoding="utf-8"
-
-    )
-
-    # --------------------------------------------------------
-    # PREPARE CSV
-    # --------------------------------------------------------
-
-    csv_records = []
-
-    for record in records:
-
-        csv_record = record.copy()
-
-        csv_record["matched_skills"] = (
-            ", ".join(
-                record["matched_skills"]
-            )
-        )
-
-        csv_record["missing_skills"] = (
-            ", ".join(
-                record["missing_skills"]
-            )
-        )
-
-        csv_records.append(
-            csv_record
-        )
-
-    dataframe = pd.DataFrame(
-        csv_records
-    )
-
-    # --------------------------------------------------------
-    # PROFESSIONAL COLUMN ORDER
-    # --------------------------------------------------------
-
-    column_order = [
-
-        "rank",
-
-        "candidate",
-
-        "score",
-
-        "skill_match",
-
-        "semantic_similarity",
-
-        "experience_score",
-
-        "education_score",
-
-        "years_experience",
-
-        "matched_skills",
-
-        "missing_skills",
-
-        "reasoning"
-
-    ]
-
-    dataframe = dataframe[
-        [
-            column
-
-            for column
-            in column_order
-
-            if column
-            in dataframe.columns
-        ]
-    ]
-
-    # --------------------------------------------------------
-    # SAVE CSV
-    # --------------------------------------------------------
-
-    csv_path = (
-
-        output_folder
-        /
-        "ranked_candidates.csv"
-
-    )
-
-    dataframe.to_csv(
-        csv_path,
-        index=False
-    )
-
-    # --------------------------------------------------------
-    # DISPLAY RESULTS
-    # --------------------------------------------------------
-
-    print(
-        "\n"
-        + "=" * 60
-    )
-
-    print(
-        "RESUME SCREENING RESULTS"
-    )
-
-    print(
-        "=" * 60
-    )
-
-    for record in records:
-
         print(
-
-            f"{record['rank']:>2}. "
-            f"{record['candidate']:<20} "
-            f"{record['score']:>6.2f}/100"
-
+            f"{index:2}. "
+            f"{result['candidate']:<20} "
+            f"{result['overall_score']:.2f}/100"
         )
 
-    print(
-        "\nResults saved:"
+    # --------------------------------------------------------
+    # Save
+    # --------------------------------------------------------
+
+    csv_file, json_file = save_results(
+        results,
+        args.output
     )
 
-    print(
-        csv_path
-    )
+    print("\n")
+    print("Results saved:")
+    print(csv_file)
+    print(json_file)
 
-    print(
-        json_path
-    )
-
-
-# ============================================================
-# RUN APPLICATION
-# ============================================================
 
 if __name__ == "__main__":
-
     main()
