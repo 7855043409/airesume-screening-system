@@ -349,6 +349,39 @@ RESUME SCREENING RESULTS
 The exact scores depend on the job description and resumes provided as input.
 
 ---
+## Sample Output
+
+The system was tested with 10 candidate resumes against the provided job description.
+
+### Candidate Ranking
+
+| Rank | Candidate | Score |
+|------|-----------|-------|
+| 1 | candidate_01 | 92.41/100 |
+| 2 | candidate_07 | 84.18/100 |
+| 3 | candidate_02 | 82.52/100 |
+| 4 | candidate_03 | 75.87/100 |
+| 5 | candidate_09 | 75.73/100 |
+| 6 | candidate_05 | 72.09/100 |
+| 7 | candidate_08 | 70.02/100 |
+| 8 | candidate_06 | 69.56/100 |
+| 9 | candidate_10 | 66.17/100 |
+| 10 | candidate_04 | 64.37/100 |
+
+### Generated Reports
+
+The application automatically generates:
+
+- `outputs/ranked_candidates.csv`
+- `outputs/ranked_candidates.json`
+
+These reports contain candidate rankings, scores, matched skills, missing skills, semantic similarity, experience score, education score, and reasoning.
+
+### GitHub Actions
+
+The project includes an automated GitHub Actions workflow that runs the resume screening pipeline whenever changes are pushed to the repository.
+
+The workflow verifies that dependencies can be installed and that the resume screening application executes successfully.
 
 ## Fallback Behaviour
 
