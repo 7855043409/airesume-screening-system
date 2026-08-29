@@ -1,3 +1,4 @@
+[![Resume Screening Test](https://github.com/7855043409/airesume-screening-system/actions/workflows/test.yml/badge.svg)](https://github.com/7855043409/airesume-screening-system/actions/workflows/test.yml)
 # AI Resume Screening Agent
 
 An AI-powered resume screening and candidate ranking system that evaluates multiple candidate resumes against a given job description.
