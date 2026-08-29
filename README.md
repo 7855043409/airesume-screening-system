@@ -592,3 +592,31 @@ https://airesume-screening-agent-kswakbsjeifp55f5tpbkpa.streamlit.app/
 ## License
 
 This project is intended for educational, demonstration, and portfolio purposes.
+
+## Tradeoff Notes
+
+### Approach
+The system combines semantic similarity, skill matching, experience evaluation, education scoring, and rule-based reasoning to rank candidates against a given job description.
+
+### Why this approach
+- Semantic similarity helps identify candidates whose resumes are relevant even when exact keywords differ.
+- Skill matching provides an interpretable measure of required skill coverage.
+- Experience and education scores add structured candidate evaluation.
+- Rule-based reasoning keeps the screening process transparent and reproducible.
+- Streamlit provides a simple interface for end-to-end demonstration.
+
+### Tradeoffs
+- The current system prioritizes explainability and fast execution over using a large, expensive LLM for every candidate.
+- Resume parsing and scoring are primarily rule-based, so unusual resume formats or highly implicit skills may not be detected perfectly.
+- Semantic similarity depends on the quality of the underlying NLP embeddings.
+- The current experience extraction is approximate and may not handle every resume wording pattern.
+
+### Future Improvements
+With more development time, I would:
+- Improve PDF/DOCX parsing for complex resume layouts.
+- Add stronger skill normalization and synonym detection.
+- Use an LLM-based reasoning layer for deeper candidate analysis.
+- Add configurable scoring weights for different job requirements.
+- Add automated evaluation using labeled resume-job-description datasets.
+- Improve handling of missing or ambiguous information.
+- Add authentication and persistent storage for production deployment.
